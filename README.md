@@ -1,228 +1,195 @@
 # StreamFlow
 
-Plataforma de streaming de video bajo demanda (VOD) con Inteligencia Artificial Generativa.
+**Proyecto Integrador - Cómputo Distribuido**
+
+Plataforma de streaming de video bajo demanda (VOD) con sistema de seguridad modular basado en feature flags y base de datos distribuida con replicación Master-Slave.
 
 ---
 
 ## Descripción
 
-StreamFlow es una plataforma de streaming VOD basada en contenido generado mediante IA generativa de código abierto. El proyecto busca determinar la viabilidad técnica, económica y operativa de implementar una plataforma de streaming escalable utilizando infraestructura cloud-native y modelos de IA generativa.
+StreamFlow es una plataforma VOD diseñada para cumplir con los requisitos académicos de la materia de Cómputo Distribuido, implementando:
 
-### Objetivos del Proyecto
+- **Base de datos distribuida** con PostgreSQL Master-Slave
+- **Sistema de seguridad modular** con feature flags activables/desactivables
+- **Detección automática de incidentes** de seguridad
+- **Streaming adaptativo** con HLS
 
-- Desarrollar un prototipo funcional de plataforma de streaming adaptativo
-- Evaluar la viabilidad técnica de integrar modelos de IA generativa de video
-- Analizar la escalabilidad y costos operativos en infraestructura cloud
-- Implementar mecanismos de protección de contenido (DRM)
-- Medir calidad de experiencia (QoE) del usuario
+### Objetivos Académicos
 
----
-
-## Características
-
-- Streaming adaptativo (HLS/DASH) con múltiples calidades
-- Generación de video con IA (Stable Video Diffusion, Text-to-Video)
-- Arquitectura de microservicios cloud-native
-- Transcodificación con FFmpeg multiresolución
-- Almacenamiento escalable (MinIO/S3 compatible)
-- Autenticación JWT con tokens de corta duración
-- CDN integrado (Cloudflare/Azure Front Door/AWS CloudFront)
-- Monitoreo con Prometheus y Grafana
-- Message Queue para procesamiento asíncrono (RabbitMQ/Kafka)
+- Implementar replicación Master-Slave en PostgreSQL (BD Distribuida)
+- Crear sistema de feature flags para módulos de seguridad
+- Detectar y clasificar incidentes de seguridad automáticamente
+- Documentar políticas de seguridad
 
 ---
 
 ## Stack Tecnológico
 
-### Backend
-
-| Componente | Tecnología | Justificación |
-|------------|------------|---------------|
-| Lenguaje | Python 3.11+ / Node.js 20+ | Excelente soporte para IA, gran ecosistema |
-| Framework API | FastAPI (Python) / Express (Node) | Alto rendimiento, documentación automática |
-| Orquestación | Docker + Kubernetes | Estándar de la industria para cloud-native |
-| Message Queue | RabbitMQ / Apache Kafka | Procesamiento asíncrono de videos |
-| Caché | Redis | Sesiones, caché de respuestas, rate limiting |
-
-### Frontend
-
-| Componente | Tecnología | Justificación |
-|------------|------------|---------------|
-| Framework | React 18+ / Next.js 14+ | SSR para SEO, gran ecosistema |
-| Video Player | Video.js / Shaka Player | Soporte HLS/DASH, DRM |
-| Estado | Zustand / Redux Toolkit | Gestión de estado simple y escalable |
-| Estilos | Tailwind CSS | Desarrollo rápido, consistencia |
-| UI Components | Radix UI / Headless UI | Accesibles, personalizables |
-
-### Base de Datos
-
-| Tipo | Tecnología | Uso |
-|------|------------|-----|
-| Relacional | PostgreSQL 15+ | Usuarios, catálogos, metadatos |
-| Documentos | MongoDB (opcional) | Logs, analytics, metadata flexible |
-| Caché | Redis 7+ | Sesiones, caché, colas |
-| Object Storage | MinIO / Wasabi / Backblaze B2 | Almacenamiento de videos |
-
-### IA Generativa
-
-| Modelo | Proveedor/Repo | Uso |
-|--------|----------------|-----|
-| Stable Video Diffusion (SVD) | Stability AI | Generación de video desde imágenes |
-| Text-to-Video | ModelScope / RunDiffusion | Generación de video desde texto |
-| SVD-XT | Stability AI (extendido) | Videos de mayor duración |
-| LLaVA / MiniGPT-V | ModelScope | Análisis y descripción de video |
+| Capa | Tecnología |
+|------|------------|
+| **Frontend** | React 19 + Vite + Tailwind + Radix UI |
+| **Backend** | Deno 2.0 + Fastify + Drizzle ORM |
+| **Base de Datos** | PostgreSQL 16 (Master-Slave) |
+| **Caché** | Redis 7 |
+| **Cola de Mensajes** | RabbitMQ |
+| **Storage** | MinIO (dev) |
+| **Streaming** | HLS con Shaka Player |
+| **OAuth** | Google OAuth 2.0 |
+| **Monitoreo** | Prometheus + Grafana |
 
 ---
 
 ## Arquitectura
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              USUARIOS FINALES                                │
-│                    (Web, Móvil, Smart TV, Desktop)                         │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           CDN (Content Delivery Network)                    │
-│                    Cloudflare / Azure Front Door / AWS CloudFront           │
-│                    ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │
-│                    │   Edge 1    │  │   Edge 2    │  │   Edge N    │       │
-│                    │   (Caché)  │  │   (aché)  │  │   (Caché)  │       │
-│                    └─────────────┘  └─────────────┘  └─────────────┘       │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         API GATEWAY / LOAD BALANCER                         │
-│                            (Nginx / Traefik)                                │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                       │
-         ┌───────────────┬───────────────┬───────────────┬───────────────┐
-         ▼               ▼               ▼               ▼               ▼
-┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
-│   Auth Svc    │ │  Catalog Svc  │ │  Player Svc   │ │  Billing Svc  │
-│  (JWT/Auth)   │ │  (Videos)     │ │  (HLS/DASH)   │ │   (Opcional)  │
-└───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
-         │               │               │               │
-         └───────────────┴───────────────┴───────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         MESSAGE QUEUE (RabbitMQ / Kafka)                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-                     ┌─────────────────┼─────────────────┐
-                     ▼                 ▼                 ▼
-┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐
-│   Video Processing      │ │   AI Generation         │ │   Storage               │
-│   (Transcoding)         │ │   Service               │ │   (Object Storage)     │
-│   ┌─────────────┐       │ │   ┌─────────────┐       │ │   ┌───────────┐         │
-│   │   FFmpeg   │       │ │   │   SVD /     │       │ │   │  MinIO    │         │
-│   │   Workers  │       │ │   │   Model     │       │ │   │  / Wasabi │         │
-│   └─────────────┘       │ │   └─────────────┘       │ │   └───────────┘         │
-└─────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│                         USUARIOS                                │
+│                    (Web Browser)                                │
+└────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌────────────────────────────────────────────────────────────────┐
+│                     Nginx (Reverse Proxy)                        │
+│                  Rate Limiting + SSL                            │
+└────────────────────────────────────────────────────────────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          ▼                   ▼                   ▼
+   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+   │  Frontend   │     │   Backend   │     │  MinIO      │
+   │  (React)    │     │   (Deno)    │     │  (Videos)   │
+   │  :5173      │     │   :8000     │     │  :9000      │
+   └─────────────┘     └─────────────┘     └─────────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          ▼                   ▼                   ▼
+   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+   │ PostgreSQL  │     │    Redis    │     │  RabbitMQ   │
+   │  Master     │◄───►│   (Cache)   │     │  (Jobs)     │
+   │   :5432     │     │   :6379     │     │   :5672     │
+   └─────────────┘     └─────────────┘     └─────────────┘
+          │                                           │
+          │         Replicación Streaming            │
+          ▼                                           ▼
+   ┌─────────────┐                           ┌─────────────┐
+   │ PostgreSQL  │                           │   Worker     │
+   │  Replica    │                           │  (FFmpeg)    │
+   │   :5433     │                           │   :8080      │
+   └─────────────┘                           └─────────────┘
 ```
 
 ---
 
-## Requisitos
+## Estructura del Proyecto
 
-- Docker y Docker Compose
-- Kubernetes (para producción)
-- PostgreSQL 15+
-- Redis 7+
-- RabbitMQ 3.12+
-- MinIO (desarrollo) / S3 compatible (producción)
-- GPU con CUDA 12.1+ (para servicio de IA)
+```
+streamflow/
+├── apps/
+│   ├── api/                    # Backend Deno
+│   │   ├── src/
+│   │   │   ├── routes/        # /auth, /videos, /admin
+│   │   │   ├── middleware/    # security, incidents
+│   │   │   └── db/            # schema, migrations
+│   │   └── deno.json
+│   │
+│   └── web/                    # Frontend React
+│       ├── src/
+│       │   ├── pages/         # Login, Register, Dashboard, etc.
+│       │   ├── components/
+│       │   └── store/         # Zustand
+│       └── package.json
+│
+├── packages/
+│   └── shared/                # Flags, types
+│
+├── infra/
+│   ├── docker-compose.yml     # Todos los servicios
+│   ├── postgres/              # Config Master-Slave
+│   ├── nginx/                 # Reverse proxy
+│   └── prometheus/            # Monitoreo
+│
+└── docs/
+    └── PROJECT_PLAN.md       # Plan de implementación
+```
+
+---
+
+## Sistema de Feature Flags
+
+Cada módulo de seguridad puede activarse/desactivarse individualmente:
+
+| Flag | Descripción | Default |
+|------|-------------|---------|
+| `AUTH_RATE_LIMIT` | Rate limiting 100 req/min por IP | ON |
+| `AUTH_ACCOUNT_LOCKOUT` | Bloqueo 30 min tras 5 intentos | ON |
+| `AUTH_2FA` | 2FA con Google Authenticator | OFF |
+| `AUTH_OAUTH_GOOGLE` | Login con Google OAuth | OFF |
+| `AUTH_CAPTCHA` | reCAPTCHA v3 | OFF |
+| `PROTECTION_CSRF` | Double submit cookie | ON |
+| `PROTECTION_XSS` | Sanitización DOMPurify | ON |
+| `PROTECTION_SQLI` | Prepared statements | ON |
+| `PROTECTION_IDOR` | Verificación de ownership | ON |
+| `INCIDENTS_LOGGING` | Registro en BD | ON |
+| `INCIDENTS_AUTO_DETECT` | Detección automática | ON |
+| `INCIDENTS_ALERTS` | Alertas a admins | OFF |
+| `AUDIT_LOG_CHANGES` | Bitácora de cambios | ON |
+
+---
+
+## Detección de Incidentes
+
+| Evento | Severidad |
+|--------|-----------|
+| Login fallido (3+ intentos) | 🟡 Medio |
+| Acceso fuera de horario | 🟡 Medio |
+| XSS attempt | 🟠 Alto |
+| SQL injection attempt | 🟠 Alto |
+| IDOR attempt | 🟠 Alto |
+| Cambio no autorizado | 🔴 Crítico |
 
 ---
 
 ## Instalación
 
-### Desarrollo Local
+### Requisitos
 
-1. Clonar el repositorio:
+- Docker y Docker Compose
+- Deno 2.0+ (para desarrollo backend)
+- Node.js 18+ (para desarrollo frontend)
+
+### Desarrollo
+
 ```bash
+# Clonar
 git clone https://github.com/Heberjfet/Streamflow.git
 cd Streamflow
+
+# Configurar entorno
+cp infra/.env.example .env
+
+# Iniciar servicios
+docker compose -f infra/docker-compose.yml up -d
+
+# Backend (desarrollo)
+cd apps/api && deno task dev
+
+# Frontend (desarrollo)
+cd apps/web && npm install && npm run dev
 ```
 
-2. Configurar variables de entorno:
-```bash
-cp .env.example .env
-# Editar .env con tus configuraciones
-```
-
-3. Iniciar servicios con Docker Compose:
-```bash
-docker-compose up -d
-```
-
-4. Verificar servicios:
-```bash
-docker-compose ps
-docker-compose logs -f api
-```
-
-### Producción con Kubernetes
-
-```bash
-kubectl apply -f k8s/
-kubectl scale deployment api-deployment --replicas=5
-```
-
----
-
-## Variables de Entorno
-
-```bash
-# .env.example
-
-# Base de datos
-DB_PASSWORD=your_secure_password_here
-DATABASE_URL=postgresql://streamflow:password@postgres:5432/streamflow
-
-# Redis
-REDIS_URL=redis://redis:6379
-
-# RabbitMQ
-RABBITMQ_USER=admin
-RABBITMQ_PASSWORD=your_rabbitmq_password
-
-# MinIO / Object Storage
-MINIO_USER=minioadmin
-MINIO_PASSWORD=minioadmin
-MINIO_ENDPOINT=localhost:9000
-
-# JWT
-JWT_SECRET=your_jwt_secret_min_32_chars
-JWT_EXPIRATION_HOURS=4
-
-# Cloud (opcional)
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_REGION=us-east-1
-
-# Grafana
-GRAFANA_PASSWORD=admin123
-```
-
----
-
-## Servicios
+### Servicios
 
 | Servicio | Puerto | Descripción |
 |----------|--------|-------------|
-| API | 8000 | API principal |
-| Auth Service | 8001 | Autenticación JWT |
-| Catalog Service | 8002 | Catálogo de videos |
-| Video Processor | 8003 | Transcodificación FFmpeg |
-| AI Generator | 8004 | Generación con IA |
-| PostgreSQL | 5432 | Base de datos principal |
+| API | 8000 | Backend Deno |
+| Frontend | 5173 | Vite dev server |
+| PostgreSQL Master | 5432 | Base de datos principal |
+| PostgreSQL Replica | 5433 | Base de datos réplica |
+| Redis | 6379 | Caché y sesiones |
 | RabbitMQ | 5672 | Cola de mensajes |
-| RabbitMQ Manager | 15672 | Interfaz de gestión |
-| MinIO API | 9000 | API de almacenamiento |
-| MinIO Console | 9001 | Consola de almacenamiento |
+| MinIO | 9000 | Almacenamiento |
+| Nginx | 80 | Reverse proxy |
 | Prometheus | 9090 | Monitoreo |
 | Grafana | 3000 | Dashboards |
 
@@ -231,143 +198,104 @@ GRAFANA_PASSWORD=admin123
 ## API Endpoints
 
 ### Autenticación
-- `POST /api/v1/auth/register` - Registrar usuario
-- `POST /api/v1/auth/login` - Iniciar sesión
-- `POST /api/v1/auth/refresh` - Refrescar token
-- `GET /api/v1/auth/me` - Obtener usuario actual
+```
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+POST /api/v1/auth/logout
+GET  /api/v1/auth/me
+POST /api/v1/auth/2fa/setup
+POST /api/v1/auth/2fa/verify
+GET  /api/v1/auth/oauth/google
+```
 
-### Catálogo
-- `GET /api/v1/catalog/videos` - Listar videos
-- `GET /api/v1/catalog/videos/:id` - Ver detalles
-- `POST /api/v1/catalog/videos` - Subir video
-- `DELETE /api/v1/catalog/videos/:id` - Eliminar video
+### Videos
+```
+GET    /api/v1/videos
+GET    /api/v1/videos/:id
+POST   /api/v1/videos
+PUT    /api/v1/videos/:id
+DELETE /api/v1/videos/:id
+```
+
+### Admin
+```
+GET  /api/v1/admin/flags
+PUT  /api/v1/admin/flags/:name
+GET  /api/v1/admin/incidents
+GET  /api/v1/admin/incidents/stats
+```
 
 ### Streaming
-- `GET /streams/:id/playlist.m3u8` - Playlist HLS
-- `GET /streams/:id/:resolution/segment_*.ts` - Segmentos de video
-
-### Generación IA
-- `POST /api/v1/ai/generate/image-to-video` - Generar video desde imagen
-- `POST /api/v1/ai/generate/text-to-video` - Generar video desde texto
-- `GET /api/v1/ai/generate/status/:job_id` - Ver estado de generación
-
----
-
-## Plan de Implementación
-
-| Fase | Duración | Entregables |
-|------|----------|-------------|
-| **Fase 1: Fundamentos** | 2 semanas | Docker Compose, DB, API básica |
-| **Fase 2: Video Processing** | 3 semanas | Pipeline transcodificación, HLS |
-| **Fase 3: IA Generativa** | 3 semanas | Integración modelo SVD |
-| **Fase 4: Streaming** | 2 semanas | Player, DRM, CDN |
-| **Fase 5: Monitoreo** | 1 semana | Prometheus, Grafana |
-| **Fase 6: Pruebas** | 2 semanas | Pruebas de carga, QoE |
-
----
-
-## Scripts Disponibles
-
-```bash
-# Desarrollo
-docker-compose up -d              # Iniciar servicios
-docker-compose logs -f           # Ver logs
-docker-compose down              # Detener servicios
-docker-compose ps                # Ver estado
-
-# Escalado
-docker-compose up -d --scale video-processor=3
-
-# Producción
-kubectl apply -f k8s/            # Desplegar a K8s
-kubectl get pods -n streamflow   # Ver pods
-kubectl logs -f deployment/api   # Ver logs
-kubectl scale deployment api-deployment --replicas=5
+```
+GET /streams/:id/playlist.m3u8
+GET /streams/:id/:resolution/segment_*.ts
 ```
 
 ---
 
-## Proveedores Cloud Recomendados
+## Plan de Implementación (6 Semanas)
 
-| Servicio | Proveedor | Costo Estimado/Mes | Notas |
-|----------|-----------|-------------------|-------|
-| **Compute (API)** | DigitalOcean | $20-40/mes | Droplet 2GB |
-| **Kubernetes** | AWS EKS / Azure AKS | $70-150/mes | 3 nodos |
-| **Object Storage** | Wasabi | $5.99/TB/mes | Sin egress |
-| **Object Storage** | Backblaze B2 | $6.00/TB/mes | Sin egress |
-| **Object Storage** | AWS S3 | ~$23/TB/mes | Con egress |
-| **CDN** | Cloudflare | $0-20/mes | Gratuito hasta 1TB |
-| **Base de Datos** | Supabase | $0-25/mes | Plan free + Pro |
-| **GPU (Inference)** | RunPod / Paperspace | $0.50-2.00/hora | On-demand |
-| **Dominio** | Namecheap/Cloudflare | $10-15/año | .com |
+| Semana | Fechas | Entregable |
+|--------|--------|-------------|
+| 1 | 24-28 Mar | Docker + Auth base + Login UI |
+| 2 | 31 Mar-4 Abr | Security flags core |
+| 3 | 7-11 Abr | Sistema de incidentes + Upload |
+| 4 | 14-18 Abr | Transcoding + HLS + Player |
+| 5 | 21-25 Abr | Google OAuth + Documentación |
+| 6 | 28 Abr-2 May | Deploy VPS + QA |
 
----
+### Entregables por Fecha
 
-## Costos Estimados
-
-| Escenario | Usuarios | Costo/Mes | Costo/Usuario |
-|-----------|----------|-----------|---------------|
-| **Desarrollo** | 10 | $20-30 | $2.00-3.00 |
-| **Pruebas** | 100 | $50-80 | $0.50-0.80 |
-| **Producción pequeña** | 1,000 | $150-250 | $0.15-0.25 |
-| **Producción media** | 10,000 | $500-800 | $0.05-0.08 |
-| **Producción grande** | 100,000 | $2,000-3,000 | $0.02-0.03 |
-
-### Optimización de Costos
-
-1. **Uso de Serverless**: Solo pagar por uso real
-2. **Spot Instances**: Hasta 90% descuento en instancias GPU
-3. **Caché CDN**: Reducir costos de egress
-4. **Almacenamiento frío**: Mover videos antiguos a storage de bajo costo
-5. **Auto-scaling**: Escalar a cero cuando no hay demanda
+| Fecha | Entregable | Flags |
+|-------|------------|-------|
+| 28 Mar | Auth JWT + Rate limiting + Lockout | `AUTH_RATE_LIMIT`, `AUTH_ACCOUNT_LOCKOUT` |
+| 4 Abr | XSS, SQLi, IDOR, CSRF activos | `PROTECTION_*` |
+| 11 Abr | Sistema de incidentes funcional | `INCIDENTS_*` |
+| 18 Abr | Video player con HLS | - |
+| 25 Abr | Google OAuth + Docs | `AUTH_OAUTH_GOOGLE` |
+| 2 May | Deploy en VPS Hostinger | Todos ON |
 
 ---
 
-## Métricas QoE (Quality of Experience)
+## Métricas QoE
 
-| Métrica | Objetivo | Descripción |
-|---------|----------|-------------|
-| **Startup Time** | < 2 segundos | Tiempo hasta primer frame |
-| **Buffering Ratio** | < 5% | Porcentaje de tiempo en buffering |
-| **Bitrate Promedio** | > 720p | Calidad visual media |
-| **Rebuffer Events** | < 1 por sesión | Interrupciones de reproducción |
-| **Latencia API** | < 200ms | Tiempo de respuesta del backend |
-| **Error Rate** | < 0.1% | Tasa de errores en streaming |
-
----
-
-## Consideraciones de Seguridad
-
-- Implementar JWT con expiración corta (4 horas)
-- Usar HTTPS en todas las comunicaciones
-- Implementar rate limiting para prevenir ataques
-- Encriptar contenido sensible con DRM
-- Rotar claves y secretos regularmente
-- Validación de entrada en todos los endpoints
-- Logging de auditoria para acciones sensibles
+| Métrica | Objetivo |
+|---------|----------|
+| Startup Time | < 2 segundos |
+| Buffering Ratio | < 5% |
+| Bitrate Promedio | > 720p |
+| Latencia API | < 200ms |
+| Error Rate | < 0.1% |
 
 ---
 
-## Contribución
+## Equipo
 
-1. Fork del repositorio
-2. Crear branch (`git checkout -b feature/amazing-feature`)
-3. Commit cambios (`git commit -m 'Add amazing feature'`)
-4. Push al branch (`git push origin feature/amazing-feature`)
-5. Abrir Pull Request
-
----
-
-## Licencia
-
-MIT License - Ver LICENSE para más detalles.
+| Rol | Responsabilidad |
+|-----|-----------------|
+| Backend Lead 1 | Auth, Security Flags, Incidentes |
+| Backend Lead 2 | Video Processing, Transcoding, Workers |
+| Frontend Lead 1 | Auth UI, Admin Panel, Incidentes UI |
+| Frontend Lead 2 | Video Player, Catalog, Upload UI |
 
 ---
 
-##Contacto
+## Documentación
 
-- **Desarrollador**: Heber Jfet
-- **Universidad**: Universidad Autónoma de Chiapas
-- **Facultad**: Contaduría y Administración
-- **Carrera**: Ingeniería en Desarrollo y Tecnologías de Software
-- **Año**: 2026
+- `docs/PROJECT_PLAN.md` - Plan de implementación completo
+- `SPEC.md` - Especificaciones técnicas
+
+---
+
+## Universidad
+
+- **Institución:** Universidad Autónoma de Chiapas
+- **Facultad:** Contaduría y Administración
+- **Carrera:** Ingeniería en Desarrollo y Tecnologías de Software
+- **Materia:** Cómputo Distribuido
+- **Proyecto:** Integrador Final
+- **Fecha:** Marzo 2025
+
+---
+
+**Estado Actual:** Esqueleto/wireframe - implementación en progreso
