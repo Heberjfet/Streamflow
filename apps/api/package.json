@@ -1,0 +1,40 @@
+{
+  "name": "streamflow-api",
+  "version": "1.0.0",
+  "description": "StreamFlow API - Deno + Fastify",
+  "type": "module",
+  "scripts": {
+    "start": "deno run -A src/main.ts",
+    "dev": "deno run -A --watch src/main.ts",
+    "db:migrate": "deno run -A src/db/migrate.ts",
+    "db:seed": "deno run -A src/db/seed.ts",
+    "worker": "deno run -A src/workers/video.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0",
+    "@std/path": "jsr:@std/path@^1.0",
+    "@std/dotenv": "jsr:@std/dotenv@^1.0",
+    "fastify": "npm:fastify@^5.0",
+    "@fastify/cors": "npm:@fastify/cors@^10.0",
+    "@fastify/jwt": "npm:@fastify/jwt@^9.0",
+    "@fastify/rate-limit": "npm:@fastify/rate-limit@^10.0",
+    "@fastify/cookie": "npm:@fastify/cookie@^10.0",
+    "@fastify/multipart": "npm:@fastify/multipart@^9.0",
+    "@fastify/static": "npm:@fastify/static@^8.0",
+    "drizzle-orm": "npm:drizzle-orm@^0.36",
+    "drizzle-kit": "npm:drizzle-kit@^0.28",
+    "postgres": "npm:postgres@^3.4",
+    "ioredis": "npm:ioredis@^5.4",
+    "amqplib": "npm:amqplib@^0.10",
+    "minio": "npm:minio@^7.1",
+    "otplib": "npm:otplib@^12.0",
+    "qrcode": "npm:qrcode@^1.5",
+    "dompurify": "npm:dompurify@^3.0",
+    "jsdom": "npm:jsdom@^24.0",
+    "zod": "npm:zod@^3.22"
+  },
+  "tasks": {
+    "dev": "deno run -A --watch src/main.ts",
+    "start": "deno run -A src/main.ts"
+  }
+}

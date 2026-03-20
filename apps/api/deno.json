@@ -1,0 +1,40 @@
+{
+  "lock": false,
+  "compilerOptions": {
+    "lib": ["deno.window", "deno.unstable"],
+    "strict": true,
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "force": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "singleQuote": true,
+    "proseWrap": "preserve"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"],
+      "include": ["ban-untagged-todo", "no-unused-vars"],
+      "exclude": ["no-explicit-any"]
+    }
+  },
+  "imports": {
+    "@std/": "jsr:@std/",
+    "fastify": "npm:fastify@^5.0",
+    "@fastify/": "npm:@fastify/"
+  },
+  "exclude": ["node_modules", "dist", ".git"]
+}

@@ -1,0 +1,254 @@
+version: "3.9"
+
+services:
+  # ==================== API ====================
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: streamflow-api
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=development
+      - PORT=8000
+      - DATABASE_URL=postgresql://streamflow:password@postgres-master:5432/streamflow
+      - DATABASE_REPLICA_URL=postgresql://streamflow:password@postgres-replica:5432/streamflow
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_USER=minioadmin
+      - MINIO_PASSWORD=minioadmin123
+      - JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+      - JWT_EXPIRATION_HOURS=4
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+      postgres-replica:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      minio:
+        condition: service_started
+    networks:
+      - streamflow-network
+    restart: unless-stopped
+
+  # ==================== WEB ====================
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: streamflow-web
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000
+    depends_on:
+      - api
+    networks:
+      - streamflow-network
+    restart: unless-stopped
+
+  # ==================== POSTGRES MASTER ====================
+  postgres-master:
+    image: postgres:16-alpine
+    container_name: streamflow-postgres-master
+    environment:
+      - POSTGRES_USER=streamflow
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=streamflow
+    volumes:
+      - postgres_master_data:/var/lib/postgresql/data
+      - ./infra/postgres/master.conf:/etc/postgresql/postgresql.conf
+      - ./infra/postgres/init-master.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - streamflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U streamflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================== POSTGRES REPLICA ====================
+  postgres-replica:
+    image: postgres:16-alpine
+    container_name: streamflow-postgres-replica
+    environment:
+      - POSTGRES_USER=streamflow
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=streamflow
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+      - ./infra/postgres/replica.conf:/etc/postgresql/postgresql.conf
+    ports:
+      - "5433:5432"
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c primary_conninfo=host=postgres-master port=5432 user=streamflow password=password
+      -c hot_standby=on
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+    networks:
+      - streamflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U streamflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================== REDIS ====================
+  redis:
+    image: redis:7-alpine
+    container_name: streamflow-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - streamflow-network
+    restart: unless-stopped
+
+  # ==================== RABBITMQ ====================
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: streamflow-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - streamflow-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================== MINIO ====================
+  minio:
+    image: minio/minio:latest
+    container_name: streamflow-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - streamflow-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
+  # ==================== VIDEO WORKER ====================
+  video-worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.worker
+    container_name: streamflow-video-worker
+    environment:
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_USER=minioadmin
+      - MINIO_PASSWORD=minioadmin123
+      - DATABASE_URL=postgresql://streamflow:password@postgres-master:5432/streamflow
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      minio:
+        condition: service_started
+    networks:
+      - streamflow-network
+    restart: unless-stopped
+
+  # ==================== NGINX ====================
+  nginx:
+    image: nginx:alpine
+    container_name: streamflow-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+      - web
+    networks:
+      - streamflow-network
+    restart: unless-stopped
+
+  # ==================== PROMETHEUS ====================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: streamflow-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - streamflow-network
+    restart: unless-stopped
+
+  # ==================== GRAFANA ====================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: streamflow-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - streamflow-network
+    restart: unless-stopped
+
+# ==================== VOLUMES ====================
+volumes:
+  postgres_master_data:
+  postgres_replica_data:
+  redis_data:
+  rabbitmq_data:
+  minio_data:
+  prometheus_data:
+  grafana_data:
+
+# ==================== NETWORKS ====================
+networks:
+  streamflow-network:
+    driver: bridge
