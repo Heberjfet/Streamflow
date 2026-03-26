@@ -304,68 +304,28 @@ ffmpeg -i input.mp4 \
 
 ## Infraestructura
 
-### Docker Compose Services
+### Docker Compose
 
-```yaml
-services:
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: streamflow
-      POSTGRES_USER: streamflow
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-
-  minio:
-    image: minio/minio:latest
-    environment:
-      MINIO_ROOT_USER: ${MINIO_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
-    command: server /data --console-address ":9001"
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio_data:/data
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - minio
-      - nextjs
-
-volumes:
-  postgres_data:
-  redis_data:
-  minio_data:
-```
-
-### Permisos Deno (Producción)
+Un archivo `docker-compose.yml` en la raíz del proyecto levanta todos los servicios:
 
 ```bash
-deno run \
-  --allow-net \
-  --allow-read \
-  --allow-run \
-  --allow-env \
-  --allow-hrtime \
-  server.ts
+docker compose up -d
 ```
+
+**Servicios:**
+- **PostgreSQL 16** - Puerto 5432
+- **Redis 7** - Puerto 6379
+- **MinIO** - Puertos 9000 (API), 9001 (Console)
+
+El servicio `minio-init` crea automáticamente los buckets necesarios:
+- `raw-uploads` (privado)
+- `production-vod` (público)
+- `thumbnails` (público)
+
+### Accesos MinIO
+- **Console:** http://localhost:9001
+- **Usuario:** streamflow
+- **Contraseña:** streamflow123
 
 ---
 
@@ -379,7 +339,6 @@ deno run \
 | Deno | 2.0 | Runtime del backend |
 | Docker | 24+ | Contenedores |
 | Docker Compose | 2.20+ | Orquestación |
-| FFmpeg | Latest | En PATH del sistema |
 | Cuenta Google Cloud | - | Para OAuth 2.0 |
 
 ### Instalación
@@ -391,66 +350,33 @@ git clone https://github.com/Heberjfet/StreamFlow.git
 cd StreamFlow
 ```
 
-2. **Configurar variables de entorno**
+2. **Iniciar servicios de infraestructura**
 
 ```bash
-cp .env.example .env
+docker compose up -d
 ```
 
-Editar `.env` con las credenciales necesarias:
-```env
-# Database
-DATABASE_URL=postgresql://streamflow:password@localhost:5432/streamflow
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# MinIO
-MINIO_ENDPOINT=localhost:9000
-MINIO_USER=streamflow
-MINIO_PASSWORD=password
-MINIO_BUCKET_RAW=raw-uploads
-MINIO_BUCKET_VOD=production-vod
-MINIO_BUCKET_THUMBS=thumbnails
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your_client_id
-GOOGLE_CLIENT_SECRET=your_client_secret
-
-# App
-NEXT_PUBLIC_API_URL=http://localhost:8000
-JWT_SECRET=your_secret_key
-```
-
-3. **Iniciar servicios de infraestructura**
+3. **Instalar dependencias frontend**
 
 ```bash
-docker compose up -d postgres redis minio
+cd frontend && npm install
 ```
 
-4. **Inicializar base de datos**
-
-```bash
-psql $DATABASE_URL -f supabase/migrations/001_initial.sql
-```
-
-5. **Instalar dependencias frontend**
-
-```bash
-npm install
-```
-
-6. **Iniciar desarrollo frontend**
+4. **Iniciar desarrollo frontend**
 
 ```bash
 npm run dev
 ```
 
-7. **En otra terminal, iniciar backend**
+5. **En otra terminal, iniciar backend**
 
 ```bash
-deno task start
+cd backend && deno install && deno task start
 ```
+
+6. **Configurar Google OAuth (opcional)**
+
+Crea un proyecto en [Google Cloud Console](https://console.cloud.google.com/) y añade las credenciales en `backend/.env`
 
 ---
 
