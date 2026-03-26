@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #050505;
+  --primary: #A855F7;
+  --secondary: #D946EF;
+  --surface: #121212;
+  --border: #262626;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+@layer utilities {
+  .gradient-radial-primary {
+    background: radial-gradient(circle at center, rgba(168, 85, 247, 0.1) 0%, transparent 70%);
+  }
+  
+  .gradient-button {
+    background: linear-gradient(135deg, #A855F7 0%, #D946EF 100%);
+  }
+  
+  .glass-surface {
+    background: rgba(18, 18, 18, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 rounded-lg font-medium transition-all duration-200;
+    background: linear-gradient(135deg, #A855F7 0%, #D946EF 100%);
+  }
+  
+  .btn-primary:hover {
+    @apply opacity-90 scale-[1.02];
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 rounded-lg font-medium transition-all duration-200;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+  }
+  
+  .btn-secondary:hover {
+    @apply opacity-80;
+    border-color: var(--primary);
+  }
+  
+  .card {
+    @apply rounded-xl overflow-hidden transition-all duration-300;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+  }
+  
+  .card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.2);
+  }
+  
+  .input {
+    @apply w-full px-4 py-3 rounded-lg outline-none transition-all duration-200;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+  
+  .input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+  }
+  
+  .input::placeholder {
+    color: var(--text-secondary);
+  }
+}
