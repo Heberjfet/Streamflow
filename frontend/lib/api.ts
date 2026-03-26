@@ -11,7 +11,7 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  private async request<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+  private async request<T>(endpoint: string, options: FetchOptions = {}, token?: string): Promise<T> {
     const { params, ...fetchOptions } = options;
     
     let url = `${this.baseUrl}${endpoint}`;
@@ -26,12 +26,18 @@ class ApiClient {
       url += `?${searchParams.toString()}`;
     }
 
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...fetchOptions.headers,
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(url, {
       ...fetchOptions,
-      headers: {
-        'Content-Type': 'application/json',
-        ...fetchOptions.headers,
-      },
+      headers,
       credentials: 'include',
     });
 
@@ -43,22 +49,28 @@ class ApiClient {
     return response.json();
   }
 
-  async get<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'GET' });
+  async get<T>(endpoint: string, token?: string, options: FetchOptions = {}): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: 'GET' }, token);
   }
 
-  async post<T>(endpoint: string, data?: unknown, options: FetchOptions = {}): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown, token?: string, options: FetchOptions = {}): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
-    });
+    }, token);
   }
 
-  async postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+  async postFormData<T>(endpoint: string, formData: FormData, token?: string): Promise<T> {
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
       body: formData,
+      headers,
       credentials: 'include',
     });
 
@@ -71,7 +83,7 @@ class ApiClient {
   }
 }
 
-export const api = new ApiClient(API_URL);
+export const apiClient = new ApiClient(API_URL);
 
 export const apiEndpoints = {
   health: '/v1/health',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { api, apiEndpoints } from '@/lib/api';
+import { apiClient } from '@/lib/api';
 import type { User } from '@/types';
 
 interface AuthState {
@@ -18,10 +18,17 @@ export function useAuth() {
   });
 
   const checkAuth = useCallback(async () => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      setState({ user: null, isLoading: false, isAuthenticated: false });
+      return;
+    }
+    
     try {
-      const user = await api.get<User>(apiEndpoints.auth.me);
+      const user = await apiClient.get<User>('/v1/auth/me', token);
       setState({ user, isLoading: false, isAuthenticated: true });
     } catch {
+      localStorage.removeItem('auth_token');
       setState({ user: null, isLoading: false, isAuthenticated: false });
     }
   }, []);
@@ -35,23 +42,30 @@ export function useAuth() {
   };
 
   const loginWithEmail = async (email: string, password: string) => {
-    await api.post(apiEndpoints.auth.login, { email, password });
-    await checkAuth();
+    const response = await apiClient.post<{ token: string; user: User }>('/v1/auth/login', { email, password }, '');
+    if (response.token) {
+      localStorage.setItem('auth_token', response.token);
+      setState({ user: response.user, isLoading: false, isAuthenticated: true });
+    }
   };
 
   const registerWithEmail = async (name: string, email: string, password: string) => {
-    await api.post(apiEndpoints.auth.register, { name, email, password });
-    await checkAuth();
+    const response = await apiClient.post<{ token: string; user: User }>('/v1/auth/register', { name, email, password }, '');
+    if (response.token) {
+      localStorage.setItem('auth_token', response.token);
+      setState({ user: response.user, isLoading: false, isAuthenticated: true });
+    }
   };
-
 
   const logout = async () => {
     try {
-      await api.post(apiEndpoints.auth.logout);
-      setState({ user: null, isLoading: false, isAuthenticated: false });
-      window.location.href = '/login';
+      const token = localStorage.getItem('auth_token');
+      await apiClient.post('/v1/auth/logout', {}, token || '');
     } catch (error) {
       console.error('Logout failed:', error);
+    } finally {
+      localStorage.removeItem('auth_token');
+      setState({ user: null, isLoading: false, isAuthenticated: false });
     }
   };
 

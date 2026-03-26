@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { VideoCard } from '@/components/VideoCard';
 import { useAuth } from '@/hooks/useAuth';
-import { api, apiEndpoints } from '@/lib/api';
+import { apiClient, apiEndpoints } from '@/lib/api';
 import type { Video, Category, CatalogResponse } from '@/types';
 
 export default function BrowsePage() {
@@ -29,12 +29,12 @@ export default function BrowsePage() {
       try {
         setLoading(true);
         const [catalogData, categoriesData] = await Promise.all([
-          api.get<CatalogResponse>(apiEndpoints.catalog, { params: { 
+          apiClient.get<CatalogResponse>(apiEndpoints.catalog, '', { params: { 
             page: 1, 
             page_size: 20,
             category: selectedCategory || undefined 
           }}),
-          api.get<Category[]>(apiEndpoints.categories),
+          apiClient.get<Category[]>(apiEndpoints.categories, ''),
         ]);
         setVideos(catalogData.videos);
         setCategories(categoriesData);

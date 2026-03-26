@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { useAuth } from '@/hooks/useAuth';
-import { api, apiEndpoints } from '@/lib/api';
+import { apiClient, apiEndpoints } from '@/lib/api';
 import type { Category, UploadProgress, VideoProcessingStatus } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -32,7 +32,8 @@ export default function UploadPage() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const data = await api.get<Category[]>(apiEndpoints.categories);
+        const token = localStorage.getItem('auth_token') || '';
+        const data = await apiClient.get<Category[]>(apiEndpoints.categories, token);
         setCategories(data);
         if (data.length > 0) {
           setCategoryId(data[0].id);
@@ -138,6 +139,10 @@ export default function UploadPage() {
         xhr.onerror = () => reject(new Error('Network error'));
         
         xhr.open('POST', `${process.env.NEXT_PUBLIC_API_URL}${apiEndpoints.ingest}`);
+        const token = localStorage.getItem('auth_token') || '';
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
         xhr.send(formData);
       });
 

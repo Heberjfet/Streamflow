@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { Navbar } from '@/components/Navbar';
 import { VideoCard } from '@/components/VideoCard';
 import { useAuth } from '@/hooks/useAuth';
-import { api, apiEndpoints } from '@/lib/api';
+import { apiClient, apiEndpoints } from '@/lib/api';
 import type { Video, CatalogResponse } from '@/types';
 import { formatDuration } from '@/lib/utils';
 
@@ -40,10 +40,11 @@ export default function WatchPage() {
       try {
         setLoading(true);
         const videoId = params.id as string;
+        const token = localStorage.getItem('auth_token') || '';
         
         const [videoData, catalogData] = await Promise.all([
-          api.get<Video>(apiEndpoints.catalogById(videoId)),
-          api.get<CatalogResponse>(apiEndpoints.catalog, { params: { page_size: 4 }}),
+          apiClient.get<Video>(apiEndpoints.catalogById(videoId), token),
+          apiClient.get<CatalogResponse>(apiEndpoints.catalog, token, { params: { page_size: 4 }}),
         ]);
         
         setVideo(videoData);
