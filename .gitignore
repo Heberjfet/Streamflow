@@ -5,3 +5,17 @@ node_modules/
 dist/
 *.log
 .DS_Store
+
+# OpenCode agents
+.agents/
+.claude/
+skills-lock.json
+
+# Database build artifacts
+backend/database/node_modules/
+backend/database/package.json
+backend/database/package-lock.json
+backend/database/generate_docx.js
+
+# LibreOffice lock files
+.~lock.*
