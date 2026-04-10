@@ -60,3 +60,17 @@ export function isMockAuth() {
   }
   return false;
 }
+
+// Función para inicializar mock auth (development only)
+// Crea un usuario demo si no existe ninguno
+export function initializeMockAuth() {
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    const existingUser = getMockUser();
+    if (!existingUser) {
+      // Crear usuario demo para desarrollo
+      const demoUser = createMockUser('Usuario Demo', 'demo@streamflow.local');
+      saveMockUser(demoUser);
+      console.log('🔓 Mock auth inicializado con usuario demo');
+    }
+  }
+}
