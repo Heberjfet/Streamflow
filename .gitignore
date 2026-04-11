@@ -1,7 +1,12 @@
 # StreamFlow
 .env
+.env.local
 node_modules/
 .next/
 dist/
 *.log
+frontend/.env.local
+*.tsbuildinfo
+.tsbuildinfo
+.eslintcache
 .DS_Store

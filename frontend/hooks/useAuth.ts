@@ -10,6 +10,8 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
+
+
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -23,7 +25,7 @@ export function useAuth() {
       setState({ user: null, isLoading: false, isAuthenticated: false });
       return;
     }
-    
+
     try {
       const user = await apiClient.get<User>('/v1/auth/me', token);
       setState({ user, isLoading: false, isAuthenticated: true });
@@ -42,18 +44,26 @@ export function useAuth() {
   };
 
   const loginWithEmail = async (email: string, password: string) => {
-    const response = await apiClient.post<{ token: string; user: User }>('/v1/auth/login', { email, password }, '');
-    if (response.token) {
-      localStorage.setItem('auth_token', response.token);
-      setState({ user: response.user, isLoading: false, isAuthenticated: true });
+    try {
+      const response = await apiClient.post<{ token: string; user: User }>('/v1/auth/login', { email, password }, '');
+      if (response.token) {
+        localStorage.setItem('auth_token', response.token);
+        setState({ user: response.user, isLoading: false, isAuthenticated: true });
+      }
+    } catch (error) {
+      throw error;
     }
   };
 
   const registerWithEmail = async (name: string, email: string, password: string) => {
-    const response = await apiClient.post<{ token: string; user: User }>('/v1/auth/register', { name, email, password }, '');
-    if (response.token) {
-      localStorage.setItem('auth_token', response.token);
-      setState({ user: response.user, isLoading: false, isAuthenticated: true });
+    try {
+      const response = await apiClient.post<{ token: string; user: User }>('/v1/auth/register', { name, email, password }, '');
+      if (response.token) {
+        localStorage.setItem('auth_token', response.token);
+        setState({ user: response.user, isLoading: false, isAuthenticated: true });
+      }
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -63,10 +73,10 @@ export function useAuth() {
       await apiClient.post('/v1/auth/logout', {}, token || '');
     } catch (error) {
       console.error('Logout failed:', error);
-    } finally {
-      localStorage.removeItem('auth_token');
-      setState({ user: null, isLoading: false, isAuthenticated: false });
     }
+    
+    localStorage.removeItem('auth_token');
+    setState({ user: null, isLoading: false, isAuthenticated: false });
   };
 
   return {
@@ -78,3 +88,4 @@ export function useAuth() {
     checkAuth,
   };
 }
+

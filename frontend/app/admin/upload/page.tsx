@@ -25,7 +25,7 @@ export default function UploadPage() {
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || user?.role !== 'admin')) {
-      router.push('/browse');
+      router.push('/dashboard/browse');
     }
   }, [isAuthenticated, isLoading, user, router]);
 
@@ -153,7 +153,7 @@ export default function UploadPage() {
         await simulateProcessing(response.video_id);
         setSuccess(true);
         setTimeout(() => {
-          router.push('/browse');
+          router.push('/dashboard/browse');
         }, 2000);
       }
     } catch (err) {

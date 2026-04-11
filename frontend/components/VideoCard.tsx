@@ -29,7 +29,7 @@ export function VideoCard({ video }: VideoCardProps) {
     : 'https://via.placeholder.com/640x360/121212/666666?text=No+Preview';
 
   return (
-    <Link href={`/watch/${video.id}`}>
+    <Link href={`/dashboard/watch/${video.id}`}>
       <div
         className="card group cursor-pointer"
         onMouseEnter={() => setIsHovered(true)}

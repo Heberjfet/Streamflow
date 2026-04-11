@@ -26,9 +26,9 @@ class ApiClient {
       url += `?${searchParams.toString()}`;
     }
 
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...fetchOptions.headers,
+      ...fetchOptions.headers as Record<string, string>,
     };
 
     if (token) {
@@ -42,8 +42,11 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      const error = await response
+        .json()
+        .catch(() => ({ message: `HTTP ${response.status}` }));
+      const errorMessage = error.message || error.error || `HTTP ${response.status}`;
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -75,8 +78,11 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Unknown error' }));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      const error = await response
+        .json()
+        .catch(() => ({ message: `HTTP ${response.status}` }));
+      const errorMessage = error.message || error.error || `HTTP ${response.status}`;
+      throw new Error(errorMessage);
     }
 
     return response.json();

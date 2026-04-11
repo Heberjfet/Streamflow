@@ -12,12 +12,13 @@ export default function LoginPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      router.push('/browse');
+      router.push('/dashboard'); // Redirige al dashboard del usuario
     }
   }, [isAuthenticated, isLoading, router]);
 
@@ -46,8 +47,14 @@ export default function LoginPage() {
           setError('El inicio de sesión con correo no está configurado');
         }
       }
-    } catch (err: any) {
-      setError(err.message || (isRegistering ? 'Error al registrarse' : 'Error al iniciar sesión'));
+    } catch (err: unknown) {
+      const rawMessage = err instanceof Error
+        ? err.message
+        : (isRegistering ? 'Error al registrarse' : 'Error al iniciar sesión');
+      const message = rawMessage === 'Invalid credentials'
+        ? 'Correo o contraseña incorrectos'
+        : rawMessage;
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -107,15 +114,47 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <div>
+            <div className="relative">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input"
+                className="input pr-20"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M2 12C3.8 8.8 7.2 6 12 6C16.8 6 20.2 8.8 22 12C20.2 15.2 16.8 18 12 18C7.2 18 3.8 15.2 2 12Z"
+                    fill="white"
+                    stroke="black"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  {showPassword ? (
+                    <circle cx="12" cy="12" r="3" fill="white" stroke="black" strokeWidth="1.8" />
+                  ) : (
+                    <path
+                      d="M5 19L19 5"
+                      stroke="black"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  )}
+                </svg>
+              </button>
             </div>
             <button
               type="submit"
