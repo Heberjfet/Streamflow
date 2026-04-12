@@ -83,9 +83,9 @@ auth.get('/callback', async (c) => {
     const jwt = generateJWT(user);
 
     return c.json({ token: jwt, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
-  } catch (error) {
-    console.error('OAuth callback error:', error);
-    return c.json({ error: 'Authentication failed' }, 500);
+  } catch (error: any) {
+    console.error('Register error:', error);
+    return c.json({ error: 'Registration failed', detalle: error.message }, 500);
   }
 });
 
@@ -121,7 +121,7 @@ auth.post('/login', async (c) => {
 
     const jwt = generateJWT(user);
 
-    return c.json({ 
+    return c.json({
       token: jwt,
       user: {
         id: user.id,
@@ -169,7 +169,7 @@ auth.post('/register', async (c) => {
     const user = newUsers[0] as User;
     const jwt = generateJWT(user);
 
-    return c.json({ 
+    return c.json({
       token: jwt,
       user: {
         id: user.id,
@@ -189,13 +189,13 @@ auth.post('/logout', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as User;
     const token = c.req.header('Authorization')?.replace('Bearer ', '');
-    
+
     if (token) {
       // Blacklist the token until it expires (max 7 days = 604800 seconds)
       const ttl = 604800;
       await setCache(`blacklist:${token}`, user.id, ttl);
     }
-    
+
     return c.json({ message: 'Logged out successfully' });
   } catch (error) {
     console.error('Logout error:', error);
@@ -205,7 +205,7 @@ auth.post('/logout', authMiddleware, async (c) => {
 
 auth.get('/me', authMiddleware, (c) => {
   const user = c.get('user') as User;
-  
+
   return c.json({
     id: user.id,
     google_id: user.google_id,

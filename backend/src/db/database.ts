@@ -53,12 +53,17 @@ export async function initDatabase() {
       google_id VARCHAR(255) UNIQUE NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       name VARCHAR(255),
+      password_hash TEXT,
       avatar_url TEXT,
       role VARCHAR(50) DEFAULT 'viewer',
       created_at TIMESTAMP DEFAULT NOW()
     )
   `;
 
+  await sql`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT
+  `;
+  
   await sql`
     CREATE TABLE IF NOT EXISTS categories (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
