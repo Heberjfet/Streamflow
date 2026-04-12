@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.ts';
 import catalogRoutes from './routes/catalog.ts';
 import categoriesRoutes from './routes/categories.ts';
 import ingestRoutes from './routes/ingest.ts';
+import videoRoutes from './routes/videos.ts';
 
 const app = new Hono();
 
@@ -29,6 +30,7 @@ app.route('/v1/auth', authRoutes);
 app.route('/v1/catalog', catalogRoutes);
 app.route('/v1/categories', categoriesRoutes);
 app.route('/v1/admin/ingest', ingestRoutes);
+app.route('/v1/videos', videoRoutes);
 
 app.notFound((c) => c.json({ error: 'Not Found', message: 'Endpoint not found' }, 404));
 
