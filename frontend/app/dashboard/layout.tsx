@@ -12,7 +12,7 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-background">
       <UserNavbar />
       <UserSidebar />
-      <main className="ml-64 mt-16">
+      <main className="ml-64 pt-16">
         {children}
       </main>
     </div>

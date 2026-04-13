@@ -16,6 +16,7 @@ export interface User {
   name: string | null;
   avatar_url: string | null;
   role: 'viewer' | 'admin';
+  password_hash?: string | null;
   created_at: Date;
 }
 
@@ -55,6 +56,7 @@ export async function initDatabase() {
       name VARCHAR(255),
       avatar_url TEXT,
       role VARCHAR(50) DEFAULT 'viewer',
+      password_hash VARCHAR(255),
       created_at TIMESTAMP DEFAULT NOW()
     )
   `;

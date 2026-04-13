@@ -87,6 +87,14 @@ class ApiClient {
 
     return response.json();
   }
+
+  async put<T>(endpoint: string, data?: unknown, token?: string, options: FetchOptions = {}): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    }, token);
+  }
 }
 
 export const apiClient = new ApiClient(API_URL);
@@ -103,5 +111,10 @@ export const apiEndpoints = {
     me: '/v1/auth/me',
     login: '/v1/auth/login',
     register: '/v1/auth/register',
+  },
+  users: {
+    me: '/v1/users/me',
+    mePassword: '/v1/users/me/password',
+    meAvatar: '/v1/users/me/avatar',
   },
 };

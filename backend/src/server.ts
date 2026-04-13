@@ -9,6 +9,7 @@ import catalogRoutes from './routes/catalog.ts';
 import categoriesRoutes from './routes/categories.ts';
 import ingestRoutes from './routes/ingest.ts';
 import videoRoutes from './routes/videos.ts';
+import userRoutes from './routes/users.ts';
 
 const app = new Hono();
 
@@ -27,6 +28,7 @@ app.get('/', (c) => c.json({
 app.get('/v1/health', (c) => c.json({ status: 'ok' }));
 
 app.route('/v1/auth', authRoutes);
+app.route('/v1/users', userRoutes);
 app.route('/v1/catalog', catalogRoutes);
 app.route('/v1/categories', categoriesRoutes);
 app.route('/v1/admin/ingest', ingestRoutes);
