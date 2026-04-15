@@ -22,7 +22,6 @@
     "@types/bcryptjs": "npm:@types/bcryptjs@^2.4.6"
   },
   "compilerOptions": {
-    "allowJs": true,
     "lib": ["deno.window"],
     "strict": true
   },
