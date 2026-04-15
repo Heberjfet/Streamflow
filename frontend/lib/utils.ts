@@ -32,6 +32,6 @@ export function cn(...classes: (string | boolean | undefined | null)[]): string 
 }
 
 export function getMinioUrl(path: string): string {
-  const endpoint = process.env.MINIO_ENDPOINT || 'localhost:9000';
-  return `http://${endpoint}/${path}`;
+  const endpoint = process.env.NEXT_PUBLIC_MINIO_URL || 'http://localhost:9002';
+  return `${endpoint}/${path}`;
 }

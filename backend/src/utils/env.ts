@@ -1,12 +1,12 @@
 import '@std/dotenv/load';
 
 export const env = {
-  PORT: parseInt(Deno.env.get('PORT') || '8000'),
+  PORT: parseInt(Deno.env.get('PORT') || '3001'),
   NODE_ENV: Deno.env.get('NODE_ENV') || 'development',
   
   DATABASE_URL: Deno.env.get('DATABASE_URL') || 'postgresql://streamflow:streamflow@localhost:5434/streamflow',
   
-  REDIS_URL: Deno.env.get('REDIS_URL') || 'redis://localhost:6380',
+  REDIS_URL: Deno.env.get('REDIS_URL') || 'redis://localhost:6379',
   
   MINIO_ENDPOINT: Deno.env.get('MINIO_ENDPOINT') || 'localhost:9002',
   MINIO_USER: Deno.env.get('MINIO_USER') || 'streamflow',
