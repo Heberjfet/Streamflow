@@ -7,7 +7,7 @@ import { getCache } from '../services/redis.ts';
 export interface AuthPayload {
   sub: string;
   email: string;
-  role: 'viewer' | 'admin';
+  role: 'viewer' | 'uploader' | 'admin';
   iat?: number;
   exp?: number;
 }

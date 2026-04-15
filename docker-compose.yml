@@ -11,6 +11,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/backups:/backups
+      - ./backend/database/backups/backup_database.sh:/usr/local/bin/backup_db:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
@@ -43,7 +45,7 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD-SHELL", "mc ready local"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -52,8 +54,7 @@ services:
     image: minio/mc:latest
     container_name: streamflow_minio_init
     depends_on:
-      minio:
-        condition: service_healthy
+      - minio
     entrypoint: >
       /bin/sh -c "
       mc alias set myminio http://minio:9000 ${MINIO_USER} ${MINIO_PASSWORD};
@@ -89,12 +90,9 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       PORT: 3001
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
+      - postgres
+      - redis
+      - minio
 
   frontend:
     build:
@@ -105,8 +103,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: ${FRONTEND_URL}/v1
-      NEXT_PUBLIC_MINIO_URL: ${MINIO_URL}
+      NEXT_PUBLIC_API_URL: http://localhost:3001/v1
+      NEXT_PUBLIC_MINIO_URL: http://localhost:9002
     depends_on:
       - backend
 

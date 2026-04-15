@@ -1,11 +1,10 @@
 import { Hono } from 'hono';
-import { sign, verify } from 'npm:jsonwebtoken@^9.0.2';
+import { sign } from 'npm:jsonwebtoken@^9.0.2';
 import { OAuth2Client } from 'npm:google-auth-library@^10.1.0';
-import bcrypt from 'npm:bcryptjs@^2.4.3';
 import { env } from '../utils/env.ts';
 import { sql, type User } from '../db/database.ts';
 import { authMiddleware, type AuthPayload } from '../middleware/auth.ts';
-import { setCache, getCache } from '../services/redis.ts';
+import { setCache } from '../services/redis.ts';
 
 const auth = new Hono();
 
@@ -86,102 +85,6 @@ auth.get('/callback', async (c) => {
   } catch (error) {
     console.error('OAuth callback error:', error);
     return c.json({ error: 'Authentication failed' }, 500);
-  }
-});
-
-auth.post('/login', async (c) => {
-  try {
-    const { email, password } = await c.req.json();
-
-    if (!email || !password) {
-      return c.json({ error: 'Email and password required' }, 400);
-    }
-
-    const existingUsers = await sql`
-      SELECT id, google_id, email, name, avatar_url, role, password_hash 
-      FROM users 
-      WHERE email = ${email}
-    `;
-
-    if (existingUsers.length === 0) {
-      return c.json({ error: 'Invalid credentials' }, 401);
-    }
-
-    const user = existingUsers[0] as User & { password_hash?: string };
-
-    // Verify password hash exists and matches
-    if (!user.password_hash) {
-      return c.json({ error: 'Invalid credentials' }, 401);
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-    if (!isPasswordValid) {
-      return c.json({ error: 'Invalid credentials' }, 401);
-    }
-
-    const jwt = generateJWT(user);
-
-    return c.json({ 
-      token: jwt,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatar_url: user.avatar_url,
-        role: user.role,
-      }
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    return c.json({ error: 'Login failed' }, 500);
-  }
-});
-
-auth.post('/register', async (c) => {
-  try {
-    const { name, email, password } = await c.req.json();
-
-    if (!name || !email || !password) {
-      return c.json({ error: 'Name, email and password required' }, 400);
-    }
-
-    if (password.length < 6) {
-      return c.json({ error: 'Password must be at least 6 characters' }, 400);
-    }
-
-    const existingUsers = await sql`
-      SELECT id FROM users WHERE email = ${email}
-    `;
-
-    if (existingUsers.length > 0) {
-      return c.json({ error: 'Email already registered' }, 409);
-    }
-
-    // Hash the password
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    const newUsers = await sql`
-      INSERT INTO users (google_id, email, name, password_hash, role)
-      VALUES (${`local_${Date.now()}`}, ${email}, ${name}, ${passwordHash}, 'viewer')
-      RETURNING id, google_id, email, name, avatar_url, role, created_at
-    `;
-
-    const user = newUsers[0] as User;
-    const jwt = generateJWT(user);
-
-    return c.json({ 
-      token: jwt,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatar_url: user.avatar_url,
-        role: user.role,
-      }
-    }, 201);
-  } catch (error) {
-    console.error('Register error:', error);
-    return c.json({ error: 'Registration failed' }, 500);
   }
 });
 
