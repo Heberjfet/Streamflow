@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'StreamFlow - AI Video Anthology Streaming',
   description: 'Plataforma de streaming autohospedada para antologías de video corto generadas por IA',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.svg',
   },
 };
 
